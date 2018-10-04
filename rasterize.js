@@ -1,4 +1,6 @@
 /* GLOBAL CONSTANTS AND VARIABLES */
+//for testing purposes
+var json = '[{"material": {"ambient": [0.2,0.1,0.4], "diffuse": [0.6,0.4,0.4], "specular": [0.3,0.3,0.3], "n": 11}, "vertices": [[0.9, 0.9, 0.75],[0.25, 0.6, 0.75],[0.4, 0.3, 0.75]],"triangles": [[0,1,2]]},{"material": {"ambient": [0.1,0.1,0.1], "diffuse": [0.1,0.6,0.4], "specular": [0.3,0.3,0.3], "n":17}, "vertices": [[0.3, 0.1, 0.65],[0.3, 0.4, 0.65],[0.6,0.5,0.65],[0.6,0.3,0.65]],"triangles": [[0,1,2],[2,3,0]]}]';
 
 /* assignment specific globals */
 const WIN_Z = 0;  // default graphics window z coord in world space
@@ -12,9 +14,9 @@ var Eye = new vec4.fromValues(0.5,0.5,-0.5,1.0); // default eye position in worl
 var gl = null; // the all powerful gl object. It's all here folks!
 var vertexBuffer; // this contains vertex coordinates in triples
 var triangleBuffer; // this contains indices into vertexBuffer in triples
-var triBufferSize; // the number of indices in the triangle buffer
+var triBufferSize = 0; // the number of indices in the triangle buffer
 var vertexPositionAttrib; // where to put position for vertex shader
-var colBuffer;
+var colBuffer; // this contains col components into colBuffer in triples
 var colPositionAttrib; // where to put position for color shader
 
 // ASSIGNMENT HELPER FUNCTIONS
@@ -72,7 +74,7 @@ function setupWebGL() {
 // read triangles in, load them into webgl buffers
 function loadTriangles() {
     var inputTriangles = getJSONFile(INPUT_TRIANGLES_URL,"triangles");
-
+	//var inputTriangles = JSON.parse(json);
     if (inputTriangles != String.null) { 
         var whichSetVert; // index of vertex in current triangle set
         var whichSetTri; // index of triangle in current triangle set
@@ -115,7 +117,7 @@ function loadTriangles() {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleBuffer); // activate that buffer
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(indexArray),gl.STATIC_DRAW); // indices to that buffer
 		
-		// send the triangle indices to webGL
+		// send the color/diffuse indices to webGL
         colBuffer = gl.createBuffer(); // init empty triangle index buffer
         gl.bindBuffer(gl.ARRAY_BUFFER, colBuffer); // activate that buffer
         gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(colArray),gl.STATIC_DRAW); // indices to that buffer
@@ -141,11 +143,11 @@ function setupShaders() {
     var vShaderCode = `
         precision mediump float;
         attribute vec3 vertexPosition;
-        attribute vec3 vertColor;
+        attribute vec3 vColor;
         varying vec3 fragColor;
 
         void main(void) {
-            fragColor = vertColor;
+            fragColor = vColor;
             gl_Position = vec4(vertexPosition, 1.0); // use the untransformed position
         }
     `;
@@ -182,7 +184,7 @@ function setupShaders() {
                 gl.enableVertexAttribArray(vertexPositionAttrib); // input to shader from array
 				
 				colPositionAttrib = // get pointer to color shader input
-                    gl.getAttribLocation(shaderProgram, "vertColor");
+                    gl.getAttribLocation(shaderProgram, "vColor");
                 gl.enableVertexAttribArray(colPositionAttrib); // input to shader from array
             } // end if no shader program link errors
         } // end if no compile errors
